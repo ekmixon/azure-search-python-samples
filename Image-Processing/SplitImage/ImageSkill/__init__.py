@@ -11,8 +11,7 @@ def base64EncodeImage(image):
     is_success, im_buf_arr = cv2.imencode(".jpg", image)
     byte_im = im_buf_arr.tobytes()
     base64Bytes = base64.b64encode(byte_im)
-    base64String = base64Bytes.decode('utf-8')
-    return base64String
+    return base64Bytes.decode('utf-8')
 
 def obfuscate_data(image, factor=3.0):
     (h, w) = image.shape[:2]
@@ -38,7 +37,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
              "Invalid body",
              status_code=400
         )
-    
+
     if body:
         logging.info(body)
         result = compose_response(body)
@@ -52,11 +51,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
 def compose_response(json_data):
     values = json.loads(json_data)['values']
-    
+
     # Prepare the Output before the loop
-    results = {}
-    results["values"] = []
-    
+    results = {"values": []}
     for value in values:
         output_record = transform_value(value)
         if output_record != None:
@@ -99,14 +96,14 @@ def transform_value(value):
                             slices.append(aslice)
 
 
-    except AssertionError  as error:
-        return (
-            {
+    except AssertionError as error:
+        return {
             "recordId": recordId,
-            "errors": [ { "message": "Error:" + error.args[0] }   ]       
-            })
+            "errors": [{"message": f"Error:{error.args[0]}"}],
+        }
 
-    
+
+            
 
     return ({
             "recordId": recordId,   
