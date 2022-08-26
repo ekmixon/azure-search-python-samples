@@ -5,7 +5,7 @@ import pandas as pd
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
-from azure.search.documents.indexes.models import SearchIndex 
+from azure.search.documents.indexes.models import SearchIndex
 from azure.search.documents.indexes.models import (
     ComplexField,
     CorsOptions,
@@ -19,7 +19,7 @@ from azure.search.documents.indexes.models import (
 # Get the service name (short name) and admin API key from the environment
 service_name = 'YOUR-SEARCH-SERVICE-NAME'
 key = 'YOUR-SEARCH-SERVICE-ADMIN-API-KEY'
-endpoint = "https://{}.search.windows.net/".format(service_name)
+endpoint = f"https://{service_name}.search.windows.net/"
 
 # Give your index a name
 # You can also supply this at runtime in __main__
@@ -80,8 +80,7 @@ def create_schema_from_json_and_upload(schema, index_name, admin_client, url=Fal
                 cors_options=cors_options)
 
     try:
-        upload_schema = admin_client.create_index(index)
-        if upload_schema:
+        if upload_schema := admin_client.create_index(index):
             print(f'Schema uploaded; Index created for {index_name}.')
         else:
             exit(0)
@@ -99,35 +98,46 @@ def convert_csv_to_json(url):
 # Batch your uploads to Azure Search
 def batch_upload_json_data_to_index(json_file, client):
     batch_array = []
-    count = 0
     batch_counter = 0
-    for i in json_file:
-        count += 1
-        batch_array.append({
-            "id": str(i['book_id']),
-            "goodreads_book_id": int(i['goodreads_book_id']),
-            "best_book_id": int(i['best_book_id']),
-            "work_id": int(i['work_id']),
-            "books_count": i['books_count'] if i['books_count'] else 0,
-            "isbn": str(i['isbn']),
-            "isbn13": str(i['isbn13']),
-            "authors": i['authors'].split(',') if i['authors'] else None,
-            "original_publication_year": int(i['original_publication_year']) if i['original_publication_year'] else 0,
-            "original_title": i['original_title'],
-            "title": i['title'],
-            "language_code": i['language_code'],
-            "average_rating": int(i['average_rating']) if i['average_rating'] else 0,
-            "ratings_count": int(i['ratings_count']) if i['ratings_count'] else 0,
-            "work_ratings_count": int(i['work_ratings_count']) if i['work_ratings_count'] else 0,
-            "work_text_reviews_count": i['work_text_reviews_count'] if i['work_text_reviews_count'] else 0,
-            "ratings_1": int(i['ratings_1']) if i['ratings_1'] else 0,
-            "ratings_2": int(i['ratings_2']) if i['ratings_2'] else 0,
-            "ratings_3": int(i['ratings_3']) if i['ratings_3'] else 0,
-            "ratings_4": int(i['ratings_4']) if i['ratings_4'] else 0,
-            "ratings_5": int(i['ratings_5']) if i['ratings_5'] else 0,
-            "image_url": i['image_url'],
-            "small_image_url": i['small_image_url']
-        })
+    for count, i in enumerate(json_file, start=1):
+        batch_array.append(
+            {
+                "id": str(i['book_id']),
+                "goodreads_book_id": int(i['goodreads_book_id']),
+                "best_book_id": int(i['best_book_id']),
+                "work_id": int(i['work_id']),
+                "books_count": i['books_count'] or 0,
+                "isbn": str(i['isbn']),
+                "isbn13": str(i['isbn13']),
+                "authors": i['authors'].split(',') if i['authors'] else None,
+                "original_publication_year": int(
+                    i['original_publication_year']
+                )
+                if i['original_publication_year']
+                else 0,
+                "original_title": i['original_title'],
+                "title": i['title'],
+                "language_code": i['language_code'],
+                "average_rating": int(i['average_rating'])
+                if i['average_rating']
+                else 0,
+                "ratings_count": int(i['ratings_count'])
+                if i['ratings_count']
+                else 0,
+                "work_ratings_count": int(i['work_ratings_count'])
+                if i['work_ratings_count']
+                else 0,
+                "work_text_reviews_count": i['work_text_reviews_count'] or 0,
+                "ratings_1": int(i['ratings_1']) if i['ratings_1'] else 0,
+                "ratings_2": int(i['ratings_2']) if i['ratings_2'] else 0,
+                "ratings_3": int(i['ratings_3']) if i['ratings_3'] else 0,
+                "ratings_4": int(i['ratings_4']) if i['ratings_4'] else 0,
+                "ratings_5": int(i['ratings_5']) if i['ratings_5'] else 0,
+                "image_url": i['image_url'],
+                "small_image_url": i['small_image_url'],
+            }
+        )
+
 
         # In this sample, we limit batches to 1000 records.
         # When the counter hits a number divisible by 1000, the batch is sent.

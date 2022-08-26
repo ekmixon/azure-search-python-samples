@@ -19,16 +19,11 @@ search_client = SearchClient(endpoint, index_name, AzureKeyCredential(key))
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
-    # http://localhost:7071/api/Lookup?id=100
-    docid = req.params.get('id') 
-
-    if docid:
+    if docid := req.params.get('id'):
         logging.info(f"/Lookup id = {docid}")
         returnedDocument = search_client.get_document(key=docid)
-        
-        full_response = {}
-        full_response["document"]=returnedDocument
-        
+
+        full_response = {"document": returnedDocument}
         return func.HttpResponse(body=json.dumps(full_response), mimetype="application/json", status_code=200)
     else:
         return func.HttpResponse(
